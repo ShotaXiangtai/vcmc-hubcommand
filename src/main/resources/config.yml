@@ -1,0 +1,12 @@
+# vcmc-hubcommand config
+# velocity.toml のサーバー名と一致させてください
+lobby-server: lobby
+
+messages:
+  # ロビーに既にいる場合のメッセージ (&a などのカラーコード使用可)
+  already-in-lobby: "&eYou are already in the lobby!"
+  # ロビーへ接続中のメッセージ
+  connecting: "&aConnecting to lobby..."
+
+# コマンド使用に必要なパーミッション (空白 = 全員使用可)
+permission: ""
