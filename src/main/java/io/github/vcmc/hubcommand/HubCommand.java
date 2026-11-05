@@ -27,6 +27,14 @@ public class HubCommand implements SimpleCommand {
             return;
         }
 
+        // 現在のサーバーがブラックリストに入っていないか確認（ブラックリストの場合は何もしない）
+        if (player.getCurrentServer().isPresent()) {
+            String currentName = player.getCurrentServer().get().getServerInfo().getName();
+            if (config.isBlocked(currentName)) {
+                return;
+            }
+        }
+
         String lobbyName = config.getLobbyServerName();
         Optional<RegisteredServer> lobbyServer = server.getServer(lobbyName);
 

@@ -4,9 +4,11 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
 
@@ -24,6 +26,7 @@ public class VcmcHubCommand {
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
+    private PluginConfig config;
 
     @Inject
     public VcmcHubCommand(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -34,16 +37,47 @@ public class VcmcHubCommand {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        PluginConfig config = new PluginConfig(dataDirectory, logger);
+        config = new PluginConfig(dataDirectory, logger);
         config.load();
 
         CommandManager commandManager = server.getCommandManager();
-        CommandMeta meta = commandManager.metaBuilder("hub")
+
+        // /hub, /lobby, /l
+        CommandMeta hubMeta = commandManager.metaBuilder("hub")
             .aliases("lobby", "l")
             .plugin(this)
             .build();
+        commandManager.register(hubMeta, new HubCommand(server, config));
 
-        commandManager.register(meta, new HubCommand(server, config));
+        // /hubblock
+        CommandMeta blockMeta = commandManager.metaBuilder("hubblock")
+            .plugin(this)
+            .build();
+        commandManager.register(blockMeta, new BlacklistCommand(server, config));
+
         logger.info("vcmc-hubcommand enabled. Lobby server: {}", config.getLobbyServerName());
+    }
+
+    @Subscribe
+    public void onCommandExecute(CommandExecuteEvent event) {
+        if (!(event.getCommandSource() instanceof Player player)) {
+            return;
+        }
+
+        if (config == null) {
+            return;
+        }
+
+        String command = event.getCommand().split(" ")[0].toLowerCase();
+        if (!command.equals("hub") && !command.equals("lobby") && !command.equals("l")) {
+            return;
+        }
+
+        if (player.getCurrentServer().isPresent()) {
+            String currentName = player.getCurrentServer().get().getServerInfo().getName();
+            if (config.isBlocked(currentName)) {
+                event.setResult(CommandExecuteEvent.CommandResult.forwardToServer());
+            }
+        }
     }
 }

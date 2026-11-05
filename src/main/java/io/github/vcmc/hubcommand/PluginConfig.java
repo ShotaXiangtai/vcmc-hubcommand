@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PluginConfig {
 
@@ -17,7 +19,13 @@ public class PluginConfig {
     private String lobbyServerName = "lobby";
     private String alreadyInLobbyMessage = "&eYou are already in the lobby!";
     private String connectingMessage = "&aConnecting to lobby...";
+    private String blockedMessage = "&cYou cannot use this command on this server.";
     private String permission = "";
+    private String adminPermission = "vcmc.hubcommand.admin";
+
+    private final List<String> blockedServers = new ArrayList<>();
+    private ConfigurationNode rootNode;
+    private Path configFile;
 
     public PluginConfig(Path dataDirectory, Logger logger) {
         this.dataDirectory = dataDirectory;
@@ -25,7 +33,7 @@ public class PluginConfig {
     }
 
     public void load() {
-        Path configFile = dataDirectory.resolve("config.yml");
+        configFile = dataDirectory.resolve("config.yml");
 
         if (!Files.exists(configFile)) {
             try {
@@ -45,14 +53,42 @@ public class PluginConfig {
             YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
                 .path(configFile)
                 .build();
-            ConfigurationNode root = loader.load();
+            rootNode = loader.load();
 
-            lobbyServerName = root.node("lobby-server").getString("lobby");
-            alreadyInLobbyMessage = root.node("messages", "already-in-lobby").getString("&eYou are already in the lobby!");
-            connectingMessage = root.node("messages", "connecting").getString("&aConnecting to lobby...");
-            permission = root.node("permission").getString("");
+            lobbyServerName = rootNode.node("lobby-server").getString("lobby");
+            alreadyInLobbyMessage = rootNode.node("messages", "already-in-lobby").getString("&eYou are already in the lobby!");
+            connectingMessage = rootNode.node("messages", "connecting").getString("&aConnecting to lobby...");
+            blockedMessage = rootNode.node("messages", "blocked").getString("&cYou cannot use this command on this server.");
+            permission = rootNode.node("permission").getString("");
+            adminPermission = rootNode.node("admin-permission").getString("vcmc.hubcommand.admin");
+
+            blockedServers.clear();
+            ConfigurationNode blockedNode = rootNode.node("blocked-servers");
+            if (!blockedNode.virtual() && blockedNode.isList()) {
+                for (ConfigurationNode node : blockedNode.childrenList()) {
+                    String s = node.getString();
+                    if (s != null && !s.isEmpty()) {
+                        blockedServers.add(s);
+                    }
+                }
+            }
         } catch (IOException e) {
             logger.error("Failed to load config.yml", e);
+        }
+    }
+
+    public void save() {
+        try {
+            if (rootNode == null || configFile == null) {
+                return;
+            }
+            rootNode.node("blocked-servers").set(blockedServers);
+            YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
+                .path(configFile)
+                .build();
+            loader.save(rootNode);
+        } catch (IOException e) {
+            logger.error("Failed to save config.yml", e);
         }
     }
 
@@ -68,7 +104,40 @@ public class PluginConfig {
         return connectingMessage;
     }
 
+    public String getBlockedMessage() {
+        return blockedMessage;
+    }
+
     public String getPermission() {
         return permission;
+    }
+
+    public String getAdminPermission() {
+        return adminPermission;
+    }
+
+    public List<String> getBlockedServers() {
+        return new ArrayList<>(blockedServers);
+    }
+
+    public boolean isBlocked(String serverName) {
+        return blockedServers.stream().anyMatch(s -> s.equalsIgnoreCase(serverName));
+    }
+
+    public boolean addBlockedServer(String serverName) {
+        if (isBlocked(serverName)) {
+            return false;
+        }
+        blockedServers.add(serverName);
+        save();
+        return true;
+    }
+
+    public boolean removeBlockedServer(String serverName) {
+        boolean removed = blockedServers.removeIf(s -> s.equalsIgnoreCase(serverName));
+        if (removed) {
+            save();
+        }
+        return removed;
     }
 }

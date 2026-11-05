@@ -7,6 +7,15 @@ messages:
   already-in-lobby: "&eYou are already in the lobby!"
   # ロビーへ接続中のメッセージ
   connecting: "&aConnecting to lobby..."
+  # ブラックリストに登録されたサーバーでコマンドを使ったときのメッセージ
+  blocked: "&cYou cannot use this command on this server."
 
 # コマンド使用に必要なパーミッション (空白 = 全員使用可)
 permission: ""
+
+# ブラックリスト管理に必要なパーミッション
+admin-permission: "vcmc.hubcommand.admin"
+
+# /hub コマンドを使えなくするサーバー一覧（ブラックリスト）
+# velocity.toml で定義したサーバー名を指定してください
+blocked-servers: []
