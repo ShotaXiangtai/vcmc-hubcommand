@@ -13,11 +13,12 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.Locale;
 
 @Plugin(
     id = "vcmc-hubcommand",
     name = "VCMC Hub Command",
-    version = "1.0.0",
+    version = "1.1.0",
     description = "Provides /hub, /lobby, /l commands to connect to the lobby server",
     authors = {"vcmc"}
 )
@@ -68,7 +69,10 @@ public class VcmcHubCommand {
             return;
         }
 
-        String command = event.getCommand().split(" ")[0].toLowerCase();
+        // Velocity ignores leading spaces when it dispatches, so " hub" has to count as /hub here too.
+        String line = event.getCommand().trim();
+        int firstSpace = line.indexOf(' ');
+        String command = (firstSpace == -1 ? line : line.substring(0, firstSpace)).toLowerCase(Locale.ROOT);
         if (!command.equals("hub") && !command.equals("lobby") && !command.equals("l")) {
             return;
         }

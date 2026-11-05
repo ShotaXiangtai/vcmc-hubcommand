@@ -27,7 +27,8 @@ public class HubCommand implements SimpleCommand {
             return;
         }
 
-        // 現在のサーバーがブラックリストに入っていないか確認（ブラックリストの場合は何もしない）
+        // ブラックリストのサーバーでは通常 onCommandExecute がバックエンドへ転送するのでここには来ない。
+        // CommandExecuteEvent を発生させない API 経由で実行された場合のみ到達し、何もしない。
         if (player.getCurrentServer().isPresent()) {
             String currentName = player.getCurrentServer().get().getServerInfo().getName();
             if (config.isBlocked(currentName)) {

@@ -7,15 +7,15 @@ messages:
   already-in-lobby: "&eYou are already in the lobby!"
   # ロビーへ接続中のメッセージ
   connecting: "&aConnecting to lobby..."
-  # ブラックリストに登録されたサーバーでコマンドを使ったときのメッセージ
-  blocked: "&cYou cannot use this command on this server."
 
 # コマンド使用に必要なパーミッション (空白 = 全員使用可)
 permission: ""
 
-# ブラックリスト管理に必要なパーミッション
+# /hubblock に必要なパーミッション (コンソールからは常に実行できます)
 admin-permission: "vcmc.hubcommand.admin"
 
-# /hub コマンドを使えなくするサーバー一覧（ブラックリスト）
-# velocity.toml で定義したサーバー名を指定してください
+# /hub, /lobby, /l をプロキシで処理しないサーバー一覧（ブラックリスト）
+# ここに登録したサーバーにいる間、これらのコマンドはそのままバックエンドへ転送されます
+# (バックエンドに同名のコマンドがあればそれが実行され、なければ不明なコマンドとして扱われます)
+# velocity.toml で定義したサーバー名を指定してください。/hubblock でも変更できます
 blocked-servers: []
